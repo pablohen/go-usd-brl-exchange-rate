@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/go-fuego/fuego"
+	"github.com/go-fuego/fuego/option"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -42,12 +44,19 @@ func main() {
 		apiCtx: &apiCtx,
 	}
 
-	mux := http.NewServeMux()
-	mux.HandleFunc("/cotacao", h.getBid)
+	s := fuego.NewServer(
+		fuego.WithAddr("localhost:8080"),
+	)
 
-	go http.ListenAndServe(":8080", mux)
-	slog.Info("Server started")
-	select {}
+	fuego.GetStd(s, "/cotacao", h.getBid,
+		option.Summary("Get bid"),
+		option.Description("Get current bid from USD to BRL"),
+		option.AddResponse(200, "", fuego.Response{
+			Type: GetBidOutput{},
+		}),
+	)
+
+	s.Run()
 }
 
 func getDb(datasource string) (*sql.DB, error) {

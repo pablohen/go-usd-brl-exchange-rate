@@ -53,13 +53,13 @@ func main() {
 func getDb(datasource string) (*sql.DB, error) {
 	db, err := sql.Open("sqlite3", "./"+datasource)
 	if err != nil {
-		slog.Error("Failed to open database", "error", err.Error())
+		slog.Error("Failed to open database: " + err.Error())
 		return nil, err
 	}
 
 	_, err = db.Exec(createTableStatement)
 	if err != nil {
-		slog.Error("Failed to create table", "error", err.Error())
+		slog.Error("Failed to create table: " + err.Error())
 		return nil, err
 	}
 
@@ -69,7 +69,7 @@ func getDb(datasource string) (*sql.DB, error) {
 func (h *ExchangeHandler) getBid(w http.ResponseWriter, r *http.Request) {
 	rate, err := getCurrentExchangeRate(*h.apiCtx)
 	if err != nil {
-		slog.Error("Error fetching exchange rate", "error", err.Error())
+		slog.Error("Error fetching exchange rate: " + err.Error())
 		http.Error(w, "Error fetching exchange rate", http.StatusInternalServerError)
 		return
 	}
@@ -78,7 +78,7 @@ func (h *ExchangeHandler) getBid(w http.ResponseWriter, r *http.Request) {
 
 	err = saveBid(*h.dbCtx, h.db, bid)
 	if err != nil {
-		slog.Error("Error saving exchange rate", "error", err.Error())
+		slog.Error("Error saving exchange rate: " + err.Error())
 		http.Error(w, "Error saving exchange rate", http.StatusInternalServerError)
 		return
 	}
@@ -93,21 +93,21 @@ func (h *ExchangeHandler) getBid(w http.ResponseWriter, r *http.Request) {
 func getCurrentExchangeRate(ctx context.Context) (*CurrentExchangeRate, error) {
 	req, err := http.NewRequestWithContext(ctx, "GET", apiBaseURL+"/json/last/USD-BRL", nil)
 	if err != nil {
-		slog.Error("Error creating request", "error", err.Error())
+		slog.Error("Error creating request: " + err.Error())
 		return &CurrentExchangeRate{}, err
 	}
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		slog.Error("Error doing request", "error", err.Error())
+		slog.Error("Error doing request: " + err.Error())
 		return &CurrentExchangeRate{}, err
 	}
 	defer resp.Body.Close()
 
 	var response CurrentExchangeRate
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		slog.Error("Error decoding response", "error", err.Error())
+		slog.Error("Error decoding response: " + err.Error())
 		return &CurrentExchangeRate{}, err
 	}
 
@@ -117,13 +117,13 @@ func getCurrentExchangeRate(ctx context.Context) (*CurrentExchangeRate, error) {
 func saveBid(ctx context.Context, db *sql.DB, bid string) error {
 	stmt, err := db.PrepareContext(ctx, insertNewBidStatement)
 	if err != nil {
-		slog.Error("Error preparing statement", "error", err.Error())
+		slog.Error("Error preparing statement: " + err.Error())
 		return err
 	}
 
 	_, err = stmt.ExecContext(ctx, bid)
 	if err != nil {
-		slog.Error("Error executing statement", "error", err.Error())
+		slog.Error("Error executing statement: " + err.Error())
 		return err
 	}
 

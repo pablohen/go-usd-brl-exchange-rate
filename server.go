@@ -86,7 +86,7 @@ func (h *ExchangeHandler) getBid(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
-	response := GetExchangeResponse{Bid: bid}
+	response := GetBidOutput{Bid: bid}
 	json.NewEncoder(w).Encode(response)
 }
 
@@ -154,6 +154,6 @@ type UsdBrl struct {
 	CreateDate string `json:"create_date"`
 }
 
-type GetExchangeResponse struct {
+type GetBidOutput struct {
 	Bid string `json:"bid"`
 }

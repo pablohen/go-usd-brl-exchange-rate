@@ -1,21 +1,29 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"log/slog"
 	"net/http"
 	"os"
+	"time"
 )
 
 type BidDTO struct {
 	Bid string `json:"bid"`
 }
 
-const fileName = "cotacao.txt"
+const (
+	fileName             = "cotacao.txt"
+	clientCtxMaxDuration = 300 * time.Millisecond
+)
 
 func main() {
-	bid, err := getBid()
+	clientCtx, clientCancel := context.WithTimeout(context.Background(), clientCtxMaxDuration)
+	defer clientCancel()
+
+	bid, err := getBid(clientCtx)
 	if err != nil {
 		slog.Error("Error getting bid: " + err.Error())
 		return
@@ -41,8 +49,15 @@ func main() {
 	slog.Info("Bid saved to `" + fileName + "`")
 }
 
-func getBid() (string, error) {
-	res, err := http.Get("http://localhost:8080/cotacao")
+func getBid(ctx context.Context) (string, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://localhost:8080/cotacao", nil)
+	if err != nil {
+		slog.Error("Error creating request: " + err.Error())
+		return "", err
+	}
+
+	client := &http.Client{}
+	res, err := client.Do(req)
 	if err != nil {
 		slog.Error("Error fetching exchange rate: " + err.Error())
 		return "", err
